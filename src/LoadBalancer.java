@@ -77,7 +77,18 @@ public class LoadBalancer {
                     Job job = (Job) incoming;
                     Scheduler.instance().scheduleJob(job);
 
-                    System.out.printf("Accepted new job with duration of %d milliseconds %n", job.durationMillis);
+                    System.out.printf("Accepted new job with duration of %d seconds %n", job.durationSeconds);
+                }
+            }
+            else if (clientType == ClientType.WORKER_NODE) {
+                Object incoming = inputStream.readObject();
+                if (incoming instanceof JobCompletedMessage) {
+                    JobCompletedMessage jobCompletedMessage = (JobCompletedMessage) incoming;
+                    System.out.printf("WorkerNode (%s) completed assigned job with duration %d%n",
+                            jobCompletedMessage.nodeName, jobCompletedMessage.job.durationSeconds);
+
+                    // Add back to the queue
+                    Scheduler.instance().addWorker(new WorkerNodeInfo(jobCompletedMessage.nodeName, this));
                 }
             }
         }

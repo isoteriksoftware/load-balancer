@@ -35,7 +35,7 @@ public class Client {
                 option = showMenu(scanner);
 
                 if (option == OPTION_SCHEDULE_JOB) {
-                    System.out.print("Enter the duration for the job (in milliseconds): ");
+                    System.out.print("Enter the duration for the job (in seconds): ");
 
                     long duration;
 

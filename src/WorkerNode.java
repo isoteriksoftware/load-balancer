@@ -52,12 +52,23 @@ public class WorkerNode {
                 throw new IllegalStateException("Connection refused by load balancer");
             }
 
-            System.out.printf("WorkerNode (%s) connected to load balancer", nodeName);
+            System.out.printf("WorkerNode (%s) connected to load balancer%n", nodeName);
         }
 
         @Override
-        protected void handleConnection() {
+        protected void handleConnection() throws IOException, ClassNotFoundException, InterruptedException {
+            Object incoming = inputStream.readObject();
+            if (incoming instanceof Job) {
+                Job job = (Job) incoming;
+                System.out.printf("Received a job with duration of %d seconds%n", job.durationSeconds);
 
+                long startTime = System.currentTimeMillis();
+                Thread.sleep(job.durationSeconds * 1000);
+                long timeSpent = (System.currentTimeMillis() - startTime) / 1000;
+
+                System.out.printf("Finished job in %d seconds%n", timeSpent);
+                sendMessage(new JobCompletedMessage(job, nodeName));
+            }
         }
     }
 }

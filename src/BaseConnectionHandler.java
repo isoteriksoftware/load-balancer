@@ -50,5 +50,5 @@ public abstract class BaseConnectionHandler extends Thread {
         connection.close();
     }
 
-    protected abstract void handleConnection() throws IOException, ClassNotFoundException;
+    protected abstract void handleConnection() throws Exception;
 }

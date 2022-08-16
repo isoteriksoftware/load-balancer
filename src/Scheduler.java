@@ -57,7 +57,7 @@ public class Scheduler extends Thread {
 
                 // Send the job request
                 worker.connectionHandler.sendMessage(job);
-                System.out.printf("Dispatched job with duration %d milliseconds to %s%n", job.durationMillis,
+                System.out.printf("Dispatched job with duration %d seconds to %s%n", job.durationSeconds,
                         worker.nodeName);
             } catch (InterruptedException e) {
                 System.out.println("Exception in scheduler: " + e);
