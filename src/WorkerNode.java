@@ -26,7 +26,7 @@ public class WorkerNode {
             connectionHandler.start();
             Thread.currentThread().join();
         } catch (Exception e) {
-            System.out.println("An exception occurred in WorkerNode: " + e);
+            System.out.println("Connection refused by load balancer");
         }
     }
 
@@ -43,11 +43,11 @@ public class WorkerNode {
             this.nodeName = nodeName;
 
             // Send a registration message to the load balancer
-            sendMessage(new NodeRegistrationMessage(nodeName));
+            sendMessage(new WorkerNodeRegistrationMessage(nodeName));
 
             // See if the balancer accepts our request
             Object response = inputStream.readObject();
-            if (!(response instanceof NodeRegistrationSuccessfulMessage)) {
+            if (!(response instanceof RegistrationSuccessfulMessage)) {
                 connection.close();
                 throw new IllegalStateException("Connection refused by load balancer");
             }

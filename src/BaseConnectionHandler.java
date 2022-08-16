@@ -8,11 +8,12 @@ public abstract class BaseConnectionHandler extends Thread {
     protected final Socket connection;
     protected final ObjectInputStream inputStream;
     protected final ObjectOutputStream outputStream;
+    private boolean running = true;
 
     protected BaseConnectionHandler(Socket connection) throws IOException {
         this.connection = connection;
         this.outputStream = new ObjectOutputStream(connection.getOutputStream());
-        this.outputStream.flush(); // this is required
+        //this.outputStream.flush(); // this is required
         this.inputStream = new ObjectInputStream(connection.getInputStream());
         setDaemon(true);
     }
@@ -20,7 +21,7 @@ public abstract class BaseConnectionHandler extends Thread {
     @Override
     public void run() {
         try {
-            while (true) {
+            while (running) {
                 handleConnection();
             }
         } catch (Exception e) {
@@ -43,5 +44,10 @@ public abstract class BaseConnectionHandler extends Thread {
         }
     }
 
-    protected abstract void handleConnection();
+    protected void closeConnection() throws IOException {
+        running = false;
+        connection.close();
+    }
+
+    protected abstract void handleConnection() throws IOException, ClassNotFoundException;
 }

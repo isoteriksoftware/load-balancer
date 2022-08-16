@@ -33,7 +33,8 @@ public class LoadBalancer {
 
     public static class ConnectionHandler extends BaseConnectionHandler {
         enum ClientType {
-            WORKER_NODE
+            WORKER_NODE,
+            CLIENT_NODE
         }
 
         private final ClientType clientType;
@@ -44,20 +45,39 @@ public class LoadBalancer {
             // Receive registration message
             Object handshake = inputStream.readObject();
 
-            if (handshake instanceof NodeRegistrationMessage) {
-                NodeRegistrationMessage nodeRegistrationMessage = (NodeRegistrationMessage) handshake;
-                sendMessage(new NodeRegistrationSuccessfulMessage());
+            if (handshake instanceof WorkerNodeRegistrationMessage) {
+                WorkerNodeRegistrationMessage nodeRegistrationMessage = (WorkerNodeRegistrationMessage) handshake;
+                sendMessage(new RegistrationSuccessfulMessage());
                 clientType = ClientType.WORKER_NODE;
 
                 System.out.printf("Accepted connection from WorkerNode (%s)%n", nodeRegistrationMessage.nodeName);
+
+                // Store the node
+                Scheduler.instance().addWorker(new WorkerNodeInfo(nodeRegistrationMessage.nodeName));
+            }
+            else if (handshake instanceof ClientNodeRegistrationMessage) {
+                ClientNodeRegistrationMessage registrationMessage = (ClientNodeRegistrationMessage) handshake;
+                sendMessage(new RegistrationSuccessfulMessage());
+                clientType = ClientType.CLIENT_NODE;
+
+                System.out.println("Accepted connection from Client");
             }
             else
                 throw new IllegalStateException("Unknown client");
         }
 
         @Override
-        protected void handleConnection() {
+        protected void handleConnection() throws IOException, ClassNotFoundException {
+            if (clientType == ClientType.CLIENT_NODE) {
+                // read job requests
+                Object incoming = inputStream.readObject();
+                if (incoming instanceof Job) {
+                    Job job = (Job) incoming;
+                    Scheduler.instance().scheduleJob(job);
 
+                    System.out.printf("Accepted new job with duration of %d milliseconds %n", job.durationMillis);
+                }
+            }
         }
     }
 }
