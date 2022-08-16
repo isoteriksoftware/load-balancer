@@ -1,7 +1,6 @@
-import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Scheduler {
+public class Scheduler extends Thread {
     private static Scheduler instance;
 
     public synchronized static Scheduler instance() {
@@ -11,23 +10,26 @@ public class Scheduler {
         return instance;
     }
 
-    private final Queue<Job> jobs;
-    private final Queue<WorkerNodeInfo> workers;
+    private final LinkedBlockingQueue<Job> jobs;
+    private final LinkedBlockingQueue<WorkerNodeInfo> workers;
+
+    private boolean running = true;
 
     public Scheduler() {
         this.jobs = new LinkedBlockingQueue<>();
         this.workers = new LinkedBlockingQueue<>();
+        start();
     }
 
     public boolean isJobsAvailable() {
         return !jobs.isEmpty();
     }
 
-    public Job getNextJob() {
-        return jobs.poll();
+    public Job getNextJob() throws InterruptedException {
+        return jobs.take();
     }
 
-    public void scheduleJob(Job job) {
+    public synchronized void scheduleJob(Job job) {
         jobs.add(job);
     }
 
@@ -35,11 +37,35 @@ public class Scheduler {
         return !workers.isEmpty();
     }
 
-    public WorkerNodeInfo getNextWorker() {
-        return workers.poll();
+    public synchronized WorkerNodeInfo getNextWorker() throws InterruptedException {
+        return workers.take();
     }
 
     public void addWorker(WorkerNodeInfo worker) {
         workers.add(worker);
+    }
+
+    @Override
+    public void run() {
+        while (running) {
+            try {
+                // Get the next job
+                Job job = getNextJob();
+
+                // Get a worker node
+                WorkerNodeInfo worker = getNextWorker();
+
+                // Send the job request
+                worker.connectionHandler.sendMessage(job);
+                System.out.printf("Dispatched job with duration %d milliseconds to %s%n", job.durationMillis,
+                        worker.nodeName);
+            } catch (InterruptedException e) {
+                System.out.println("Exception in scheduler: " + e);
+            }
+        }
+    }
+
+    public void shutdown() {
+        running = false;
     }
 }

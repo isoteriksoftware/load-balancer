@@ -13,9 +13,7 @@ public abstract class BaseConnectionHandler extends Thread {
     protected BaseConnectionHandler(Socket connection) throws IOException {
         this.connection = connection;
         this.outputStream = new ObjectOutputStream(connection.getOutputStream());
-        //this.outputStream.flush(); // this is required
         this.inputStream = new ObjectInputStream(connection.getInputStream());
-        setDaemon(true);
     }
 
     @Override
@@ -35,7 +33,10 @@ public abstract class BaseConnectionHandler extends Thread {
         }
     }
 
-    protected void sendMessage(Serializable message) {
+    public void sendMessage(Serializable message) {
+        if (!running)
+            return;
+
         try {
             outputStream.writeObject(message);
             outputStream.flush();
@@ -44,7 +45,7 @@ public abstract class BaseConnectionHandler extends Thread {
         }
     }
 
-    protected void closeConnection() throws IOException {
+    public void closeConnection() throws IOException {
         running = false;
         connection.close();
     }

@@ -12,6 +12,8 @@ public class LoadBalancer {
             listener = new ServerSocket(LISTENING_PORT);
             System.out.println("Load balancer listening on port: " + LISTENING_PORT);
 
+            Scheduler.instance();
+
             while (true) {
                 Socket connection = listener.accept();
 
@@ -53,7 +55,7 @@ public class LoadBalancer {
                 System.out.printf("Accepted connection from WorkerNode (%s)%n", nodeRegistrationMessage.nodeName);
 
                 // Store the node
-                Scheduler.instance().addWorker(new WorkerNodeInfo(nodeRegistrationMessage.nodeName));
+                Scheduler.instance().addWorker(new WorkerNodeInfo(nodeRegistrationMessage.nodeName, this));
             }
             else if (handshake instanceof ClientNodeRegistrationMessage) {
                 ClientNodeRegistrationMessage registrationMessage = (ClientNodeRegistrationMessage) handshake;
